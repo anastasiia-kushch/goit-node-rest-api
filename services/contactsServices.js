@@ -1,13 +1,8 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import { nanoid } from 'nanoid';
-
-const contactsPath = path.resolve('db', 'contacts.json');
+import Contact from '../models/contact.js';
 
 export async function listContacts() {
   try {
-    const data = await fs.readFile(contactsPath, 'utf-8');
-    const contacts = JSON.parse(data);
+    const contacts = await Contact.findAll();
     return contacts;
   } catch (error) {
     console.log(error);
@@ -16,9 +11,8 @@ export async function listContacts() {
 
 export async function getContactById(contactId) {
   try {
-    const contacts = await listContacts();
-    const foundContact = contacts.find((contact) => contact.id === contactId);
-    return foundContact || null;
+    const contact = await Contact.findByPk(contactId);
+    return contact;
   } catch (error) {
     console.log(error);
   }
@@ -26,13 +20,10 @@ export async function getContactById(contactId) {
 
 export async function removeContact(contactId) {
   try {
-    const contacts = await listContacts();
-    const filteredContacts = contacts.filter(
-      (contact) => contact.id !== contactId,
-    );
-    await fs.writeFile(contactsPath, JSON.stringify(filteredContacts, null, 2));
-    const foundContact = contacts.find((contact) => contact.id === contactId);
-    return foundContact || null;
+    const contact = await Contact.findByPk(contactId);
+    if (!contact) return null;
+    await contact.destroy();
+    return contact;
   } catch (error) {
     console.log(error);
   }
@@ -40,17 +31,7 @@ export async function removeContact(contactId) {
 
 export async function addContact(name, email, phone) {
   try {
-    const contacts = await listContacts();
-    const newContact = {
-      id: nanoid(),
-      name,
-      email,
-      phone,
-    };
-
-    contacts.push(newContact);
-    await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
-
+    const newContact = await Contact.create({ name, email, phone });
     return newContact;
   } catch (error) {
     console.log(error);
@@ -59,19 +40,21 @@ export async function addContact(name, email, phone) {
 
 export async function updateContact(contactId, data) {
   try {
-    const contacts = await listContacts();
-    const index = contacts.findIndex((contact) => contact.id === contactId);
+    const contact = await Contact.findByPk(contactId);
+    if (!contact) return null;
+    const updated = await contact.update(data);
+    return updated;
+  } catch (error) {
+    console.log(error);
+  }
+}
 
-    if (index === -1) {
-      return null;
-    }
-
-    const updatedContact = { ...contacts[index], ...data };
-    contacts[index] = updatedContact;
-
-    await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
-
-    return updatedContact;
+export async function updateStatusContact(contactId, body) {
+  try {
+    const contact = await Contact.findByPk(contactId);
+    if (!contact) return null;
+    const updated = await contact.update({ favorite: body.favorite });
+    return updated;
   } catch (error) {
     console.log(error);
   }

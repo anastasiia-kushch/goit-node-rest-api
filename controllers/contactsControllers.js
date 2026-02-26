@@ -4,6 +4,7 @@ import {
   removeContact,
   addContact,
   updateContact as updateContactService,
+  updateStatusContact,
 } from '../services/contactsServices.js';
 import HttpError from '../helpers/HttpError.js';
 
@@ -18,7 +19,7 @@ export const getAllContacts = async (req, res, next) => {
 
 export const getOneContact = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
     const contact = await getContactById(id);
 
     if (!contact) {
@@ -33,7 +34,7 @@ export const getOneContact = async (req, res, next) => {
 
 export const deleteContact = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
     const deletedContact = await removeContact(id);
 
     if (!deletedContact) {
@@ -58,7 +59,7 @@ export const createContact = async (req, res, next) => {
 
 export const updateContact = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
     const { name, email, phone } = req.body;
 
     const updateData = {};
@@ -74,6 +75,22 @@ export const updateContact = async (req, res, next) => {
 
     if (!updatedContact) {
       throw HttpError(404, 'Not found');
+    }
+
+    res.status(200).json(updatedContact);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateContactStatus = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const updatedContact = await updateStatusContact(id, req.body);
+
+    if (!updatedContact) {
+      res.status(404).json({ message: 'Not found' });
+      return;
     }
 
     res.status(200).json(updatedContact);
