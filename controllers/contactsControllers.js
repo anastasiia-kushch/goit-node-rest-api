@@ -6,11 +6,13 @@ import {
   updateContact as updateContactService,
   updateStatusContact,
 } from '../services/contactsServices.js';
+
 import HttpError from '../helpers/HttpError.js';
 
 export const getAllContacts = async (req, res, next) => {
   try {
-    const contacts = await listContacts();
+    const contacts = await listContacts(req.user.id);
+
     res.status(200).json(contacts);
   } catch (error) {
     next(error);
@@ -20,7 +22,8 @@ export const getAllContacts = async (req, res, next) => {
 export const getOneContact = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    const contact = await getContactById(id);
+
+    const contact = await getContactById(id, req.user.id);
 
     if (!contact) {
       throw HttpError(404, 'Not found');
@@ -35,7 +38,8 @@ export const getOneContact = async (req, res, next) => {
 export const deleteContact = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    const deletedContact = await removeContact(id);
+
+    const deletedContact = await removeContact(id, req.user.id);
 
     if (!deletedContact) {
       throw HttpError(404, 'Not found');
@@ -50,7 +54,9 @@ export const deleteContact = async (req, res, next) => {
 export const createContact = async (req, res, next) => {
   try {
     const { name, email, phone } = req.body;
-    const newContact = await addContact(name, email, phone);
+
+    const newContact = await addContact(name, email, phone, req.user.id);
+
     res.status(201).json(newContact);
   } catch (error) {
     next(error);
@@ -60,18 +66,14 @@ export const createContact = async (req, res, next) => {
 export const updateContact = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    const { name, email, phone } = req.body;
 
-    const updateData = {};
-    if (name !== undefined) updateData.name = name;
-    if (email !== undefined) updateData.email = email;
-    if (phone !== undefined) updateData.phone = phone;
+    const updateData = req.body;
 
-    if (Object.keys(updateData).length === 0) {
-      throw HttpError(400, 'Body must have at least one field');
-    }
-
-    const updatedContact = await updateContactService(id, updateData);
+    const updatedContact = await updateContactService(
+      id,
+      updateData,
+      req.user.id,
+    );
 
     if (!updatedContact) {
       throw HttpError(404, 'Not found');
@@ -86,11 +88,11 @@ export const updateContact = async (req, res, next) => {
 export const updateContactStatus = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    const updatedContact = await updateStatusContact(id, req.body);
+
+    const updatedContact = await updateStatusContact(id, req.body, req.user.id);
 
     if (!updatedContact) {
-      res.status(404).json({ message: 'Not found' });
-      return;
+      throw HttpError(404, 'Not found');
     }
 
     res.status(200).json(updatedContact);
