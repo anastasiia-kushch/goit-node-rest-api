@@ -5,6 +5,8 @@ import {
 } from '../services/authServices.js';
 
 import HttpError from '../helpers/HttpError.js';
+import fs from 'fs';
+import path from 'path';
 
 export const register = async (req, res, next) => {
   try {
@@ -65,6 +67,38 @@ export const getCurrent = async (req, res, next) => {
       email: req.user.email,
       subscription: req.user.subscription,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateAvatar = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      throw HttpError(401, 'Not authorized');
+    }
+
+    if (!req.file) {
+      throw HttpError(400, 'File not provided');
+    }
+
+    const { path: tempPath, originalname } = req.file;
+    const ext = path.extname(originalname);
+    const filename = `${req.user.id}-${Date.now()}${ext}`;
+    const publicDir = path.join('public', 'avatars');
+
+    // ensure public/avatars exists
+    await fs.promises.mkdir(publicDir, { recursive: true });
+
+    const resultPath = path.join(publicDir, filename);
+
+    await fs.promises.rename(tempPath, resultPath);
+
+    const avatarURL = `/avatars/${filename}`;
+
+    await req.user.update({ avatarURL });
+
+    res.json({ avatarURL });
   } catch (error) {
     next(error);
   }

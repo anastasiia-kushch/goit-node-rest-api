@@ -15,6 +15,9 @@ app.use(morgan('tiny'));
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from public (e.g., /avatars/<filename>)
+app.use(express.static('public'));
+
 app.use('/api/contacts', contactsRouter);
 app.use('/api/auth', authRouter);
 
