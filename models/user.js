@@ -1,5 +1,5 @@
 import { DataTypes } from 'sequelize';
-import { sequelize } from '../db.js';
+import { sequelize } from '../db/db.js';
 
 const User = sequelize.define('user', {
   password: {
@@ -24,6 +24,14 @@ const User = sequelize.define('user', {
     defaultValue: null,
   },
   avatarURL: {
+    type: DataTypes.STRING,
+    defaultValue: null,
+  },
+  verify: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  verificationToken: {
     type: DataTypes.STRING,
     defaultValue: null,
   },

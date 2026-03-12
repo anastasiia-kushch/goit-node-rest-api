@@ -2,6 +2,8 @@ import {
   registerUser,
   loginUser,
   logoutUser,
+  verifyUser,
+  resendVerificationEmail,
 } from '../services/authServices.js';
 
 import HttpError from '../helpers/HttpError.js';
@@ -72,6 +74,34 @@ export const getCurrent = async (req, res, next) => {
   }
 };
 
+export const verifyEmail = async (req, res, next) => {
+  try {
+    const { verificationToken } = req.params;
+
+    await verifyUser(verificationToken);
+
+    res.status(200).json({ message: 'Verification successful' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resendVerification = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      throw HttpError(400, 'missing required field email');
+    }
+
+    await resendVerificationEmail(email);
+
+    res.status(200).json({ message: 'Verification email sent' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const updateAvatar = async (req, res, next) => {
   try {
     if (!req.user) {
@@ -87,7 +117,6 @@ export const updateAvatar = async (req, res, next) => {
     const filename = `${req.user.id}-${Date.now()}${ext}`;
     const publicDir = path.join('public', 'avatars');
 
-    // ensure public/avatars exists
     await fs.promises.mkdir(publicDir, { recursive: true });
 
     const resultPath = path.join(publicDir, filename);
