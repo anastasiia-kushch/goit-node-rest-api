@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import gravatar from 'gravatar';
 import User from '../models/user.js';
 import HttpError from '../helpers/HttpError.js';
 
@@ -14,9 +15,12 @@ export async function registerUser(email, password) {
 
   const hashPassword = await bcrypt.hash(password, 10);
 
+  const avatarURL = gravatar.url(email, { s: '250' }, true);
+
   const newUser = await User.create({
     email,
     password: hashPassword,
+    avatarURL,
   });
 
   return newUser;
